@@ -18,6 +18,10 @@
         </activity>
         <activity android:name=".Hex2DecActivity" />
         <activity android:name=".Dec2HexActivity" />
+        <activity
+            android:name=".StoredActivity"
+            android:label="@string/title_activity_stored"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

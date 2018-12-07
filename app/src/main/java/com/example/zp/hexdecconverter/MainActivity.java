@@ -29,7 +29,8 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    public void enterTest (View view){
-
+    public void enterStored (View view){
+        Intent intent = new Intent(this, StoredActivity.class);
+        startActivity(intent);
     }
 }
