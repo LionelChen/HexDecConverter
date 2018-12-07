@@ -29,4 +29,12 @@ public class Converted {
         return result;
     }
 
+    public long getDecValue(){
+        return this.decValue;
+    }
+
+    public String getHexValue(){
+        return this.hexValue;
+    }
+
 }
