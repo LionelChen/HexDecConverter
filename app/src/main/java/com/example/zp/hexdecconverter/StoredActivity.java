@@ -2,6 +2,7 @@ package com.example.zp.hexdecconverter;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -37,11 +38,11 @@ public class StoredActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_stored);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -58,14 +59,14 @@ public class StoredActivity extends AppCompatActivity {
             list.add(listValues[i]);
         }
 
+
+        //Get Firebase instance
         myDatabase = FirebaseDatabase.getInstance().getReference("message");
 
-
-        ValueEventListener postListener = new ValueEventListener() {
+        //Add Firebase event listener (Update data only one time)
+        myDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 TextView text = findViewById(R.id.jsonField);
                 text.setText(dataSnapshot.getValue().toString());
                 try {
@@ -77,7 +78,55 @@ public class StoredActivity extends AppCompatActivity {
                     while(keys.hasNext()) {
                         String key = keys.next();
                         if (obj.get(key) instanceof JSONObject) {
+                            Log.w("Each", ((JSONObject) ((JSONObject) obj.get(key))).toString());
+                            // 加上就崩?
+                            //list.add((obj.get(key)).toString());
+                        }
+                    }
+
+
+
+                } catch (JSONException e) {
+                    //some exception handler code.
+                    Log.w("JSON Exception", e.toString());
+                }
+
+                Log.w("onDataChange", dataSnapshot.getValue().toString());
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        final ListView listview = (ListView) findViewById(R.id.listView);
+        final StableArrayAdapter adapter = new StableArrayAdapter(this, android.R.layout.simple_list_item_1, list);
+        listview.setAdapter(adapter);
+
+
+        //Add Firebase event listener (Update data on remote database change)
+        ValueEventListener postListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+
+                TextView text = findViewById(R.id.jsonField);
+
+                try {
+                    JSONObject obj = new JSONObject(dataSnapshot.getValue().toString());
+
+                    text.setText(obj.toString());
+                    Iterator<String> keys = obj.keys();
+
+                    while(keys.hasNext()) {
+                        String key = keys.next();
+                        if (obj.get(key) instanceof JSONObject) {
                             Log.w("Each", ((JSONObject) obj.get(key)).toString());
+                            // TODO: list.add加上就崩?
+                            // list.add(((JSONObject) obj.get(key)).toString());
+                            // list.add("hi");
+                            adapter.notifyDataSetChanged();
                         }
                     }
 
@@ -100,17 +149,7 @@ public class StoredActivity extends AppCompatActivity {
         myDatabase.addValueEventListener(postListener);
 
 
-
-        final ListView listview = (ListView) findViewById(R.id.listView);
-
-
-
-
-        final StableArrayAdapter adapter = new StableArrayAdapter(this,
-                android.R.layout.simple_list_item_1, list);
-        listview.setAdapter(adapter);
-
-
+        // Listview item on click delete
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
@@ -118,8 +157,7 @@ public class StoredActivity extends AppCompatActivity {
                                     int position, long id) {
                 final String item = (String) parent.getItemAtPosition(position);
                 //Animate time
-                view.animate().setDuration(1000).alpha(0)
-                        .withEndAction(new Runnable() {
+                view.animate().setDuration(1000).alpha(0).withEndAction(new Runnable() {
                             @Override
                             public void run() {
                                 list.remove(item);
@@ -132,6 +170,8 @@ public class StoredActivity extends AppCompatActivity {
         });
     }
 
+
+    //Array Adapter
     private class StableArrayAdapter extends ArrayAdapter<String> {
 
         HashMap<String, Integer> mIdMap = new HashMap<String, Integer>();
@@ -143,6 +183,7 @@ public class StoredActivity extends AppCompatActivity {
                 mIdMap.put(objects.get(i), i);
             }
         }
+
 
         @Override
         public long getItemId(int position) {
@@ -156,41 +197,5 @@ public class StoredActivity extends AppCompatActivity {
         }
 
     }
-
-    public class HashMapAdapter extends BaseAdapter {
-
-        private HashMap<String, String> mData = new HashMap<String, String>();
-        private String[] mKeys;
-        public HashMapAdapter(HashMap<String, String> data){
-            mData  = data;
-            mKeys = mData.keySet().toArray(new String[data.size()]);
-        }
-
-        @Override
-        public int getCount() {
-            return mData.size();
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return mData.get(mKeys[position]);
-        }
-
-        @Override
-        public long getItemId(int arg0) {
-            return arg0;
-        }
-
-        @Override
-        public View getView(int pos, View convertView, ViewGroup parent) {
-            String key = mKeys[pos];
-            String Value = getItem(pos).toString();
-
-            //do your view stuff here
-
-            return convertView;
-        }
-    }
-
 
 }
